@@ -1,4 +1,8 @@
 import os
+# Set performance-related environment variables
+os.environ['ATTN_BACKEND'] = 'xformers'
+os.environ['SPCONV_ALGO'] = 'native'
+
 import sys
 import json
 import torch
@@ -24,29 +28,33 @@ from trellis.utils import postprocessing_utils
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Set performance-related environment variables
-os.environ['ATTN_BACKEND'] = 'xformers'
-os.environ['SPCONV_ALGO'] = 'native'
 
 model = None
 try:
-    # Define the fixed path to the model inside the container
-    # Path points to the model on the auto-mounted Network Volume
-    model_path = '/runpod-volume/TRELLIS-image-large'
-    
-    if os.path.exists(model_path):
-        logging.info(f"Loading TRELLIS model from path: {model_path}")
-        # Load the pipeline and move it to the GPU
+    # Determine the correct volume path based on the environment
+    # In an interactive Pod, the volume is at /workspace.
+    # In a serverless worker, it's at /runpod-volume.
+    if os.path.exists('/workspace'):
+        base_volume_path = '/workspace'
+    else:
+        base_volume_path = '/runpod-volume'
+
+    # Construct the full, absolute path to the model
+    model_path = os.path.join(base_volume_path, 'TRELLIS-image-large')
+
+    logging.info(f"Attempting to load TRELLIS model from path: {model_path}")
+
+    if os.path.isdir(model_path):
+        # Load the pipeline from the local path and move it to the GPU
         model = TrellisImageTo3DPipeline.from_pretrained(model_path)
         model.cuda()
         logging.info("TRELLIS model initialized successfully and moved to GPU.")
     else:
-        logging.error(f"Model path not found: {model_path}. Model could not be loaded.")
-        # In a production scenario, you might want to exit or handle this failure explicitly
+        logging.error(f"Model path not found or is not a directory: {model_path}. Model could not be loaded.")
         sys.exit(1)
 
 except Exception as e:
-    logging.error(f"Error during model initialization: {e}")
+    logging.error(f"Error during model initialization: {e}", exc_info=True)
     model = None # Ensure model is None if initialization fails
     sys.exit(1)
 
