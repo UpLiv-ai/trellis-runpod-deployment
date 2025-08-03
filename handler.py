@@ -103,8 +103,9 @@ def handler(job):
                 slat_sampler_params=slat_params
             )
         else:
+            image = image_list[0]
             outputs = model.run(
-                image_list,
+                image,
                 seed=seed,
                 sparse_structure_sampler_params=sparse_params,
                 slat_sampler_params=slat_params
