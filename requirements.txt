@@ -1,0 +1,48 @@
+# Core ML and Data Handling
+ninja
+packaging
+easydict
+opencv-python-headless
+scipy
+numpy
+Pillow
+# PyTorch Ecosystem (versions from original Dockerfile)
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+xformers==0.0.23.post1
+# 3D and Mesh Processing
+rembg
+onnxruntime
+trimesh
+xatlas
+pyvista
+pymeshfix
+igraph
+# Transformers and Image I/O
+transformers
+imageio
+imageio-ffmpeg
+tqdm
+# RunPod Serverless SDK (MANDATORY)
+runpod
+# Specialized 3D libraries from original Dockerfile
+# Kaolin from NVIDIA
+kaolin==0.17.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.1.2_cu118.html
+# Sparse Convolutional Networks
+spconv-cu118==2.3.6
+# Git-based dependencies from original Dockerfile
+# utils3d
+git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
+# nvdiffrast
+git+https://github.com/NVlabs/nvdiffrast.git
+# diffoctreerast
+git+https://github.com/JeffreyXiang/diffoctreerast.git
+# diff-gaussian-rasterization (from mip-splatting submodule)
+git+https://github.com/autonomousvision/mip-splatting.git#subdirectory=submodules/diff-gaussian-rasterization
+# NLP and other utilities from original Dockerfile
+rouge-score>=0.1.2
+nltk>=3.9.1
+pandas>=2.2.3
+tiktoken>=0.8.0
+openai>=1.52.2
