@@ -27,7 +27,8 @@ os.environ = 'native'
 model = None
 try:
     # Define the fixed path to the model inside the container
-    model_path = '/app/trellis-stable-projectorz/image_to_3d_model/TRELLIS-image-large'
+    # Path points to the model on the auto-mounted Network Volume
+    model_path = '/runpod-volume/TRELLIS-image-large'
     
     if os.path.exists(model_path):
         logging.info(f"Loading TRELLIS model from path: {model_path}")
