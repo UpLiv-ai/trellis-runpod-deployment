@@ -115,8 +115,8 @@ def handler(job):
         # 3. Convert Output to GLB
         logging.info("Converting model output to GLB format...")
         glb = postprocessing_utils.to_glb(
-            outputs['gaussian'],
-            outputs['mesh'],
+            outputs['gaussian'][0],
+            outputs['mesh'][0],
             simplify=0.95,
             texture_size=2048
         )
