@@ -10,9 +10,13 @@ from io import BytesIO
 # Import the RunPod SDK
 import runpod
 
-# Add the TRELLIS project to the Python path
-sys.path.append('/workspace/trellis-stable-projectorz')
-from trellis.modeling_trellis import TrellisImageTo3DPipeline
+# Get the absolute path of the directory containing this script (handler.py)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Construct the path to the trellis-stable-projectorz directory, which is inside the project
+trellis_path = os.path.join(script_dir, 'trellis-stable-projectorz')
+# Add this dynamic path to the Python path
+sys.path.append(trellis_path)
+from trellis.pipelines import TrellisImageTo3DPipeline
 from trellis.utils import postprocessing_utils
 
 # --- Global Scope Model Initialization ---
