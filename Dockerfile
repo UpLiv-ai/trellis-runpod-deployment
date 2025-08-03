@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR $WORKDIR
 
-# Install system‑level build tools (kaolin, spconv compilation needs these)
+# Install git and build tools (so pip can install Git‑based dependencies)
 RUN apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
        git build-essential curl libgl1 && \
