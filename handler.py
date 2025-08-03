@@ -25,8 +25,8 @@ from trellis.utils import postprocessing_utils
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Set performance-related environment variables
-os.environ = 'xformers'
-os.environ = 'native'
+os.environ['ATTN_BACKEND'] = 'xformers'
+os.environ['SPCONV_ALGO'] = 'native'
 
 model = None
 try:
