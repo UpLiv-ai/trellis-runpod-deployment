@@ -1,42 +1,55 @@
-# Stage 1: Define the base image
-# Use an official PyTorch image with Python 3.10 and CUDA 11.8, matching the original environment's core dependencies.
-# The 'devel' tag includes the full CUDA toolkit, which is often necessary for compiling custom extensions.
-FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel
+###############################
+# → Selector stage (dual‑mode)  #
+###############################
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04 AS builder
 
-# Set environment variables for non-interactive installs and unbuffered Python output for better logging.
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-# Set environment variables for model performance, as seen in the original Dockerfile.
-ENV ATTN_BACKEND=xformers
-ENV SPCONV_ALGO=native
+# Force Python to stdout/stderr unbuffered for logs
+ENV PYTHONUNBUFFERED=1 \
+    MODE_TO_RUN=pod \
+    WORKDIR=/workspace
 
-# Install system-level dependencies.
-# - git is required for installing packages from GitHub.
-# - libglm-dev was a dependency in the original Dockerfile for 3D graphics operations.
-# Clean up apt cache to reduce image size.
-RUN apt-get update && \
-    apt-get install -y git libglm-dev && \
+WORKDIR $WORKDIR
+
+# Install system‑level build tools (kaolin, spconv compilation needs these)
+RUN apt-get update -qq && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       git build-essential curl libgl1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory inside the container.
-WORKDIR /app
+# Create isolated Python environment
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --upgrade pip
 
-# Copy the consolidated requirements file into the working directory.
-COPY requirements.txt.
+# Install specific versions before loading additional requirements
+# Torch 2.1.2 + Xformers wheel via PyTorch index, then kaolin
+RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xformers \
+       --index-url https://download.pytorch.org/whl/cu118 && \
+    /venv/bin/pip install --ignore-installed kaolin==0.17.0 \
+       -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.1.2_cu118.html
 
-# Install all Python dependencies from the single requirements.txt file.
-# Using --no-cache-dir reduces the image size by not storing the pip cache.
-RUN pip install --no-cache-dir -r requirements.txt
+# Now install other dependencies
+COPY requirements.txt .
+RUN /venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire build context (including handler.py and the trellis-stable-projectorz subdirectory)
-# into the container's working directory. This brings in the model code, model weights, and handler script.
-COPY..
+# Clone your UpLiv‑ai trellis‑runpod‑deployment repo (including handler.py and Trellis code)
+RUN git clone https://github.com/UpLiv-ai/trellis-runpod-deployment.git .
 
-# Add the cloned repository to the PYTHONPATH.
-# This allows Python to find and import the 'trellis' package from the handler.py script.
-ENV PYTHONPATH="${PYTHONPATH}:/app/trellis-stable-projectorz"
+################################
+# → Runtime stage (final image) #
+################################
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
 
-# Define the command to run when a worker container starts.
-# This executes the handler script, which in turn starts the RunPod serverless listener.
-# The '-u' flag ensures that Python output is sent straight to stdout/stderr without buffering.
-CMD ["python", "-u", "handler.py"]
+ENV PYTHONUNBUFFERED=1 \
+    MODE_TO_RUN=pod \
+    WORKDIR=/workspace
+
+WORKDIR $WORKDIR
+
+# Copy virtualenv and application files
+COPY --from=builder /venv /venv
+COPY --from=builder $WORKDIR $WORKDIR
+
+ENV PATH="/venv/bin:$PATH"
+
+# Entrypoint script chooses pod vs serverless
+CMD ["bash", "./start.sh"]
