@@ -1,7 +1,14 @@
 import os
 import sys
 sys.path.append(os.getcwd())
-os.environ['ATTN_BACKEND'] = 'xformers'
+
+
+try: # Try to import xformers, or use the faster one (flash-attn) if they weren't installed
+   import xformers
+   os.environ['ATTN_BACKEND'] = 'xformers'
+except ImportError:
+   os.environ['ATTN_BACKEND'] = 'flash-attn'
+
 os.environ['SPCONV_ALGO'] = 'native' 
 
 import gradio as gr
@@ -420,7 +427,7 @@ with gr.Blocks(delete_cache=(600, 600)) as demo:
 # Define a function to initialize the pipeline
 def initialize_pipeline(precision="full"):
     global pipeline
-    pipeline = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
+    pipeline = TrellisImageTo3DPipeline.from_pretrained("jetx/TRELLIS-image-large")
     # Apply precision settings. Reduce memory usage at the cost of numerical precision:
     print('')
     print(f"used precision: '{precision}'.  Loading...")
@@ -437,4 +444,6 @@ def initialize_pipeline(precision="full"):
 # Launch the Gradio app
 if __name__ == "__main__":
     initialize_pipeline(cmd_args.precision)
+    print(f'')
+    print(f"After launched, open a browser and enter 127.0.0.1:7860 (or whatever IP and port is shown below) into url, as if it was a website:")
     demo.launch()
