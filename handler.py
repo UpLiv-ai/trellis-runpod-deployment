@@ -11,7 +11,7 @@ from io import BytesIO
 import runpod
 
 # Add the TRELLIS project to the Python path
-sys.path.append('/app/trellis-stable-projectorz')
+sys.path.append('/workspace/trellis-stable-projectorz')
 from trellis.modeling_trellis import TrellisImageTo3DPipeline
 from trellis.utils import postprocessing_utils
 
