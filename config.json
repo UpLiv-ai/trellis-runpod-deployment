@@ -1,0 +1,9 @@
+{
+  "api_key": "rpa_48W35Q8FVMKCG3Z2GH9SGAGKBIQAKIJXU2B2QXO21wei5h",
+  "endpoint_url": "https://api.runpod.ai/v2/2bvmzz94odrpg9/runsync",
+  "images": [
+    "test_rug_input.png"
+  ],
+  "seed": 42,
+  "output_filename": "test_model.glb"
+}

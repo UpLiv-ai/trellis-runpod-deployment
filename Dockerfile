@@ -18,6 +18,13 @@ RUN apt-get update -qq \
 RUN python3 -m venv /venv \
  && /venv/bin/pip install --upgrade pip setuptools wheel
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ⬆️ Pin numpy & scipy before any other installs (so ABI lines up for SciPy’s ufuncs)
+RUN /venv/bin/pip install --no-cache-dir \
+      numpy==1.23.5 \
+      scipy==1.9.3
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Install specific torch + xformers + kaolin
 RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xformers \
        --index-url https://download.pytorch.org/whl/cu118 \
@@ -36,7 +43,7 @@ COPY . /workspace
 ################################
 FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
 ENV PYTHONUNBUFFERED=1 \
-    MODE_TO_RUN=pod \
+    MODE_TO_RUN=serverless \
     WORKDIR=/workspace \
     PATH="/venv/bin:$PATH"
 
