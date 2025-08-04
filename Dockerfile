@@ -6,9 +6,13 @@ FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04 AS builder
 # ⚠️ Must include at least one CUDA arch so torch.cpp_extension sees something
 ENV TORCH_CUDA_ARCH_LIST="8.6+PTX"
 
+# Build-arg for cache busting ⬆️
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
 WORKDIR /workspace
 
-# System‐level tools + ninja
+# System‑level tools + ninja
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       git build-essential curl cmake ninja-build libgl1 pkg-config python3-dev \
@@ -17,6 +21,11 @@ RUN apt-get update -qq \
 # Create Python venv and upgrade tooling
 RUN python3 -m venv /venv \
  && /venv/bin/pip install --upgrade pip setuptools wheel
+
+# Pin numpy & scipy early for ABI compatibility
+RUN /venv/bin/pip install --no-cache-dir \
+      numpy==1.23.5 \
+      scipy==1.9.3
 
 # Install specific torch + xformers + kaolin
 RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xformers \
@@ -28,12 +37,11 @@ RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xfo
 COPY requirements.txt /workspace/
 RUN /venv/bin/pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⬆️ Force-reinstall numpy & scipy *after* your other deps
+# Force-reinstall numpy, scipy, opencv headless after deps
 RUN /venv/bin/pip install --no-cache-dir --no-deps --force-reinstall \
       numpy==1.23.5 \
-      scipy==1.9.3
-# ─────────────────────────────────────────────────────────────────────────────
+      scipy==1.9.3 \
+      opencv-python-headless==4.7.0.72
 
 # Get your repository content (handler.py + trellis code)
 COPY . /workspace
@@ -42,14 +50,18 @@ COPY . /workspace
 # → Runtime stage (actual container)
 ################################
 FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+
 ENV PYTHONUNBUFFERED=1 \
     MODE_TO_RUN=serverless \
-    WORKDIR=/workspace \
+    WARP_DISABLE_CPU_TRACER=1 \
     PATH="/venv/bin:$PATH"
 
-WORKDIR $WORKDIR
+WORKDIR /workspace
 
+# Copy venv and workspace from builder
 COPY --from=builder /venv /venv
 COPY --from=builder /workspace /workspace
 
-CMD ["bash", "./start.sh"]
+# Ensure start.sh is executable and used as entrypoint ⬆️
+RUN chmod +x /workspace/start.sh
+ENTRYPOINT ["/workspace/start.sh"]
