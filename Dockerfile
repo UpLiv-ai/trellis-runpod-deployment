@@ -18,13 +18,6 @@ RUN apt-get update -qq \
 RUN python3 -m venv /venv \
  && /venv/bin/pip install --upgrade pip setuptools wheel
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⬆️ Pin numpy & scipy before any other installs (so ABI lines up for SciPy’s ufuncs)
-RUN /venv/bin/pip install --no-cache-dir \
-      numpy==1.23.5 \
-      scipy==1.9.3
-# ─────────────────────────────────────────────────────────────────────────────
-
 # Install specific torch + xformers + kaolin
 RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xformers \
        --index-url https://download.pytorch.org/whl/cu118 \
@@ -34,6 +27,13 @@ RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xfo
 # Copy and install Python requirements
 COPY requirements.txt /workspace/
 RUN /venv/bin/pip install --no-cache-dir --no-build-isolation -r requirements.txt
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⬆️ Force-reinstall numpy & scipy *after* your other deps
+RUN /venv/bin/pip install --no-cache-dir --no-deps --force-reinstall \
+      numpy==1.23.5 \
+      scipy==1.9.3
+# ─────────────────────────────────────────────────────────────────────────────
 
 # Get your repository content (handler.py + trellis code)
 COPY . /workspace
