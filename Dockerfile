@@ -12,7 +12,7 @@ RUN echo "Cache bust: $CACHEBUST"
 
 WORKDIR /workspace
 
-# System-level tools + ninja
+# System‑level tools + ninja
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       git build-essential curl cmake ninja-build libgl1 pkg-config python3-dev \
@@ -37,17 +37,15 @@ RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xfo
 COPY requirements.txt /workspace/
 RUN /venv/bin/pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
-# Force-reinstall NumPy ≥1.24, SciPy 1.10.x, and OpenCV headless after deps
+# 2) Now force-reinstall NumPy ≥1.24, SciPy 1.10.x, and OpenCV headless
 RUN /venv/bin/pip install --no-cache-dir --no-deps --force-reinstall \
       numpy==1.24.3 \
       scipy==1.10.1 \
       opencv-python-headless==4.7.0.72
 
-# Copy repository code
-COPY . /workspace
 
-# Embed the pre-trained TRELLIS model
-COPY TRELLIS-image-large /workspace/TRELLIS-image-large
+# Get your repository content (handler.py + trellis code)
+COPY . /workspace
 
 ################################
 # → Runtime stage (actual container)
@@ -65,6 +63,6 @@ WORKDIR /workspace
 COPY --from=builder /venv /venv
 COPY --from=builder /workspace /workspace
 
-# Ensure start.sh is executable and used as entrypoint
+# Ensure start.sh is executable and used as entrypoint ⬆️
 RUN chmod +x /workspace/start.sh
 ENTRYPOINT ["/workspace/start.sh"]

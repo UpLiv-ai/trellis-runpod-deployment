@@ -34,10 +34,10 @@ try:
     # Determine the correct volume path based on the environment
     # In an interactive Pod, the volume is at /workspace.
     # In a serverless worker, it's at /runpod-volume.
-    if os.path.exists('/workspace'):
-        base_volume_path = '/workspace'
-    else:
+    if os.path.exists('/runpod-volume'):
         base_volume_path = '/runpod-volume'
+    else:
+        base_volume_path = '/workspace'
 
     # Construct the full, absolute path to the model
     model_path = os.path.join(base_volume_path, 'TRELLIS-image-large')
