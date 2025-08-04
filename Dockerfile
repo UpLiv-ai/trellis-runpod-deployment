@@ -37,11 +37,12 @@ RUN /venv/bin/pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 xfo
 COPY requirements.txt /workspace/
 RUN /venv/bin/pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
-# Force-reinstall numpy, scipy, opencv headless after deps
+# 2) Now force-reinstall NumPy ≥1.24, SciPy 1.10.x, and OpenCV headless
 RUN /venv/bin/pip install --no-cache-dir --no-deps --force-reinstall \
-      numpy==1.23.5 \
-      scipy==1.9.3 \
+      numpy==1.24.3 \
+      scipy==1.10.1 \
       opencv-python-headless==4.7.0.72
+
 
 # Get your repository content (handler.py + trellis code)
 COPY . /workspace
